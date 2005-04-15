@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>IEtoW3C.js Documentation</title>
+	<style type="text/css">
+	body {font-family:sans-serif; padding:0; margin:.5em 2em;}
+	h1 {font-size:1.5em; font-weight:bold; border-bottom:3px double; padding-bottom:.5em;}
+	h2 {font-size:1.2em; font-weight:bold; background:#EEE; padding:0 .5em; border:1px solid #CCC;}
+	h3 {font-size:1em; font-weight:bold;}
+	p, ul {margin-bottom:1em;}
+	code.block {display:block;}
+	</style>
+</head>
+<body>
+
+<h1>IEtoW3C.js Compatibility Script Documentation</h1>
+
+<h2>Where To Get It:</h2>
+	<ul>
+		<li><a href="IEtoW3C.js">IEtoW3C.js</a> - the script</li>
+		<li><a href="IEtoW3C-loader.js">IEtoW3C-loader.js</a> - optional lightweight loader script</li>
+	</ul>
+
+<h2>What It Does:</h2>
+	<p>The purpose of this script is to modify the <acronym title="Microsoft Internet Explorer">MSIE</acronym> <acronym title="Document Object Model">DOM</acronym> to bring it into near-compliance with the W3C DOM Level 2.  Below is a listing of the DOM objects, properties, and methods that are not directly supported by MSIE but are fully or mostly supported by using this script:</p>
+
+	<h3>DOM Level 2 Events (the biggie)</h3>
+	<ul>
+		<li><code>{window|document|Element}.addEventListener(eventType,handler,capture)</code></li>
+		<li><code>{window|document|Element}.removeEventListener(eventType,handler,capture)</code></li>
+		<li><code>document.createEvent(eventFamily)</code></li>
+		<li><code>Element.dispatchEvent(event)</code></li>
+		<li>Event object:
+			<ul>
+				<li><code>Event.currentTarget</code></li>
+				<li><code>Event.target</code></li>
+				<li><code>Event.relatedTarget</code></li>
+				<li><code>Event.stopPropagation()</code></li>
+				<li><code>Event.preventDefault()</code></li>
+				<li><code>Event.bubbles</code></li>
+				<li><code>Event.cancelable</code></li>
+				<li><code>Event.timeStamp</code></li>
+				<li><code>KeyEvent.charCode</code></li>
+			</ul>
+		</li>
+	</ul>
+
+	<h3>DOM Level 2 Core</h3>
+	<ul>
+		<!--<li>document.implementation
+			<ul>
+				<li>.hasFeature()</li>
+				<li>.createDocumentType()</li>
+				<li>.createDocument()</li>
+			</ul>
+		</li>-->
+		<li><code>document.createElementNS(namespace, tagName)</code> *</li>
+		<li><code>{document|Element}.getElementsByTagNameNS(namespace, tagName)</code> *</li>
+	</ul>
+	<p>* Note: <em>These are only enabled in XML context, and they don't actually handle namespaces but are just pointers to the built-in <code>createElement()</code> and <code>getElementsByTagName()</code> methods.  Use of these is not recommended.</em></p>
+
+	<h3>DOM Level 2 Style</h3>
+	<ul>
+		<li><code>getComputedStyle(element,pseudo).getPropertyValue(property)</code></li>
+	</ul>
+
+	<h3>DOM Level 2 Views</h3>
+	<ul>
+		<li><code>document.defaultView</code></li>
+	</ul>
+	
+	<p>The items I find most useful are the Events and Style modules.  The former unifies the events model, including the entire event capture/bubble flow, and the latter is very useful in finding an element's cascaded style properties.</p>
+	
+<h2>How To Use It:</h2>
+<p>Include a <code>&lt;script/></code> reference to IEtoW3C.js or IEtoW3C-loader.js in your HTML file, before any other scripts.  Then freely use the W3C DOM in any following scripts, without having to worry about browser detection or code forking.</p>
+<p>See the following resources for more information on using the W3C DOM:</p>
+<ul>
+	<li><a href="http://www.w3.org/DOM/DOMTR">W3C's DOM Technical Reports (the specs)</a></li>
+	<li><a href="http://www.scottandrew.com/weblog/writing">Scott Andrew LaPera's articles on DOM and DHTML</a>, particularly <a href="http://www.scottandrew.com/weblog/articles/events">"Working With Events in Netscape 6"</a></li>
+</ul>
+	
+<h2>What It Depends On:</h2>
+<p>None.</p>
+
+<h2>Compatibility:</h2>
+<p>Adds W3C DOM Core, Events, Style, and Views support to Microsoft Internet Explorer.  Adds partial W3C DOM Style support to Opera 7.</p>
+<p>This script is geared toward fixing the standards support of browsers with broken standards support (mostly Internet Explorer), therefore it should have no effect on other browsers.  Conveniently, nearly every other mainstream browser (Mozilla/Netscape, Safari/KHTML, most of Opera 7) appears to have strong enough standards support so as not to need the fixes this script provides, so they ignore it.  So theoretically, with use of this script you should be able to write a W3C DOM-compliant script and have it work in any current mainstream browser.</p>
+<p>Because standards-compliant browsers don't need this rather large script, there is a small supporting script, <a href="IEtoW3C-loader.js">IEtoW3C-loader.js</a>, that will only load the full script if it is needed.  This gives the full benefit of the script, without making compliant browsers download it.</p>
+
+<h2>Demonstration:</h2>
+<p><a href="IEtoW3C-test.html">Test Cases demonstrating basic and advanced usage</a></p>
+
+<h2>To Do:</h2>
+<ul>
+	<li>Test #8 doesn't work quite right (if link clicked before "add" button, listener not added, also screws up other tests)</li>
+	<li>Try to make functions in IEtoW3C_hookupDOMEventsOn references to named funcs instead of anonymous - might help memory size</li>
+	<li>Continue work on preventing memory leakage in MSIE</li>
+	<li>Fix <code>document.implementation.createDocument()</code> support in MSIE6 if possible (IE6 partially implements the <code>document.implementation</code> object, but doesn't seem to allow adding methods to it.)</li>
+	<li>Break into modules for each DOM spec (Events, Style, Core...)</li>
+	<li>Make the namespace-aware DOM methods (<code>document.createElementNS()</code> and <code>Element.getElementsByTagNameNS()</code>) actually handle namespaces.</li>
+</ul>
+
+<h2>Known Issues:</h2>
+<ul>
+	<li><p>Memory leaks pretty bad. General Numbers as of 2002-11-16:</p>
+		<ul>
+			<li>Reload test document -> increase ~200K memory</li>
+			<li>Create new element -> increase ~2K memory</li>
+		</ul>
+		<p>I consider this acceptable for most lightweight use, but not for large or constantly-used applications. I will continue to investigate, but this may be due to weaknesses in IE's JScript implementation, and there's unfortunately nothing I can do about that.</p>
+	</li>
+	<li><p>As of 2002-10-15, Support for MSIE5 Macintosh has been added. However, this support is fragile and has some serious bugs, so it has been disabled in the first line of the DOM2 Events section in the script.  The bugs are:</p>
+		<ul>
+			<li>Since Mac IE doesn't recognize <code>Element.attachEvent()</code>, the core event listening is done by using the old <code>Element.onevent=handler;</code> syntax. The unfortunate side-effect of this is that if any script uses that syntax to set new event listeners, all the listeners set by <code>addEventListener()</code> will be lost. However, if all scripts consistengly use <code>addEventListener()</code> instead of the old syntax, it should work well.</li>
+			<li>It seems keypress events do not propagate to form fields. So adding a keypress listener to an input field will disable text entry.</li>
+			<li>Elements created by DOM scripts will not get the W3C properties and methods hooked on to them automatically.</li>
+		</ul>
+	</li>
+	<li>MSIE does not recognize event listeners on nodes other than elements.  This will result in instances where the "target" of an event may be the text node in compliant browsers but the text node's parent element in MSIE.</li>
+	<li><p>Performance: Using this script as a compatibility layer will significantly slow down initial page rendering (as the additional properties and methods are hooked onto each element) and all event handling (as the listening element's entire DOM lineage is walked).  There are a few things that can be done when authoring to optimize performance:</p>
+		<ul>
+			<li>Keep the number of elements in the document as small as possible.</li>
+			<li>Keep elements with listeners as shallow in the DOM hierarchy as possible. This minimizes the number of levels the script has to walk through when an event is fired.</li>
+		</ul>
+		<p>Needless to say, these both suck.  I am continuing to investigate ways to improve performance.</p>
+	</li>
+	<li>Opera 7 is given partial DOM2 Style support; however, <code>ComputedStyle.getPropertyValue(prop)</code> only works on style properties that have an <code>offset*</code> analog, such as <code>offsetWidth</code>, <code>offsetHeight</code>, etc.  Any other properties will return null in Opera 7.</li>
+</ul>
+
+<h2>License:</h2>
+
+<p>The contents of this file are subject to the Mozilla Public License Version 1.1 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at <a href="http://www.mozilla.org/MPL/">http://www.mozilla.org/MPL/</a></p>
+
+<p>Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF
+ANY KIND, either express or implied. See the License for the specific language governing rights and
+limitations under the License.</p>
+
+<p>The Initial Developer of the Original Code is Jason Johnston (jj{at}lojjic[dot]net). Portions created by
+the Initial Developer are Copyright (C) 2004 the Initial Developer. All Rights
+Reserved.</p>
+
+<!--
+<p>Contributor(s):</p>
+<ul>
+	<li>contributor name</li>
+</ul>
+-->
+
+<p>This code is provided for you to use free of charge.  If you find it useful please consider making a donation to help me continue to create tools like this one.  You can find my contact info at <a href="http://lojjic.net">http://lojjic.net</a>.</p>
+
+</body>
+</html>
