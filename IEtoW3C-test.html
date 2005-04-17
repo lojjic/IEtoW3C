@@ -315,17 +315,27 @@ window.addEventListener("load",onWindowLoaded,false);
 		<p><a href="javascript:alert('Boo.');" onclick="output(this.href); return false;">Clicking this should output the href attribute of this link, "javascript:alert('Boo.');", but not follow it.</a></p>
 	</div>
 	
-	<!--
 	<h1>Test W3C DOM2 Core</h1>
 	
+	<div id="testHasAttribute" class="someclass" title="sometitle" customattr="blahblah">
+		<h2>14) Element.hasAttribute()</h2>
+		<p>The buttons below test an element for the existence of certain attributes.  The target element has the following attributes: <code>id</code>, <code>class</code>, <code>title</code>, and <code>customattr</code>, so the first four buttons should output "true" while the last button should output "false".</p>
+		<button onclick="output(this.parentNode.hasAttribute('id'))">hasAttribute("id")</button>
+		<button onclick="output(this.parentNode.hasAttribute('class'))">hasAttribute("class")</button>
+		<button onclick="output(this.parentNode.hasAttribute('title'))">hasAttribute("title")</button>
+		<button onclick="output(this.parentNode.hasAttribute('customattr'))">hasAttribute("customattr")</button>
+		<button onclick="output(this.parentNode.hasAttribute('noattr'))">hasAttribute("noattr")</button>
+	</div>
+	
+	<!--
 	<div id="testImport">
-		<h2>14) XML Document/DOM Import</h2>
+		<h2>15) XML Document/DOM Import</h2>
 		<p>Clicking the button below should import an external XML document, and show the root element name.</p>
 		<button onclick="onTestXMLImportButtonPoked(event);">Import XML</button>
 	</div>
 
 	<div id="testNS">
-		<h2>15) Test DOM Core namespace methods</h2>
+		<h2>16) Test DOM Core namespace methods</h2>
 		<p>The first button should show the number of buttons currently in this test. The second button should create a new button with the XHTML namespace.</p>
 		<button onclick="onTestNSGetButtonPoked(event);">test getElementsByTagNameNS</button>
 		<button onclick="onTestNSCreateButtonPoked(event);">test createElementNS()</button>

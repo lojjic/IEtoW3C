@@ -235,6 +235,21 @@ if(!document.implementation) {
 		createDocumentType : function(qName,pubId,sysId) {}
 	}
 }
+
+// Element.hasAttribute():
+if(typeof document.documentElement.hasAttribute != "function") {
+	function IEtoW3C_hasAttribute(attr) {
+		if(attr == "class") return (this.className != ""); //class is special
+		return (this[attr] != null);
+	}
+	window.addEventListener("load",function(evt) {
+		var all = document.all;
+		for(var i=0; i<all.length; i++) {
+			all[i].hasAttribute = IEtoW3C_hasAttribute;
+		}
+	},false);
+}
+
 /* Experimental: add createDocument() -- IE6 fails on this, because it doesn't allow custom properties to be added to its partially-implemented document.implementation. Grr.
 if(!document.implementation.createDocument && window.ActiveXObject) {
 	document.implementation.createDocument = function(namespace,rootNode,doctype) {
@@ -288,7 +303,6 @@ if(isXML && !document.getElementsByTagNameNS && document.getElementsByTagName) {
 		hookupNamespaceMethodsOn(document);
 	},false);
 }
-
 
 /*=== DOM2 Views: ===*/
 if(!document.defaultView) document.defaultView = window;
