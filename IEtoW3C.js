@@ -29,8 +29,8 @@ if(!document.getElementById) {
 		}
 		else if(d.all) x=d.all[id]; //MSIE 4
 		return x;
-	}
-} 
+	};
+}
 
 
 /*=== DOM2 Events: ===*/
@@ -47,7 +47,7 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 				elt[IEtoW3C_evtAttrs[i]] = null;
 			}
 		}
-	}
+	};
 	function IEtoW3C_execAttrEvent(evt) {
 		var func = this["IEtoW3C_on"+evt.type].toString();
 		var funcBody = func.substring(func.indexOf("{")+1, func.lastIndexOf("}"));
@@ -56,7 +56,7 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		var result = eval(funcBody);
 		if(result == false) evt.preventDefault(); //"return false;" prevents default action
 		func = funcBody = null;
-	}
+	};
 	function IEtoW3C_handleEvent(elt,evt) {
 		var i, j, tmp;
 		
@@ -129,7 +129,7 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 
 		//clean up:
 		i = j = tmp = elt = elt.IEtoW3C_handler = ancestors = evt = /*evt.currentTarget = evt.target = evt.stopPropagation = evt.preventDefault = evt.relatedTarget = evt.pageX = evt.pageY = evt.eventPhase = evt.timeStamp = evt.charCode =*/ null;
-	}
+	};
 	
 	function IEtoW3C_hookupDOMEventsOn(elt) {
 		if(elt.IEtoW3C_onevent) return;
@@ -141,7 +141,7 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 				onevent = this.IEtoW3C_onevent[evtType] = {capture:[],bubble:[]};
 				//set base listener to fire off custom event handling flow (it all starts here):
 				if(this.attachEvent) this.attachEvent("on"+evtType, function() { IEtoW3C_handleEvent(elt); } );
-				else this["on"+evtType] = function() { IEtoW3C_handleEvent(elt); } //IE Mac
+				else this["on"+evtType] = function() { IEtoW3C_handleEvent(elt); }; //IE Mac
 			}
 			var handlers = (capture) ? onevent.capture : onevent.bubble;
 			for(var i=0; i<handlers.length; i++) {
@@ -170,19 +170,19 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 			IEtoW3C_handleEvent(this,evt);
 		};
 		IEtoW3C_grabEventAttributes(elt);
-	}
+	};
 	function IEtoW3C_unhookDOMEventsFrom(elt) {
 		elt.addEventListener = elt.removeEventListener = elt.dispatchEvent = /*elt.IEtoW3C_onevent =*/ null;
 		for(var i=0; i<IEtoW3C_evtAttrs.length; i++) {
 			elt["IEtoW3C_tmp"+IEtoW3C_evtAttrs[i]] = null;
 		}
-	}
+	};
 	document.createEvent = function(evtFam) {
 		var evt = {}; //new Event object
 		if(evtFam=="UIEvents") evt.initUIEvent = function(type,bub,can,view,det) {
 			this.type = type; this.bubbles = bub; this.cancelable = can;
 			this.view = view; this.detail = det;
-		}
+		};
 		else if(evtFam=="MouseEvents") evt.initMouseEvent = function(type,bub,can,view,det,sX,sY,cX,cY,ctrl,alt,shft,meta,btn,relTgt) {
 			this.type = type; this.bubbles = bub; this.cancelable = can;
 			this.view = view; this.detail = det;
@@ -191,18 +191,18 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 			this.ctrlKey = ctrl; this.altKey = alt;
 			this.shiftKey = shft; this.metaKey = meta;
 			this.button = btn; this.relatedTarget = relTgt;
-		}
+		};
 		else if(evtFam=="MutationEvents") evt.initMutationEvent = function(type,bub,can,relNode,prevVal,newVal,attrName,attrChange) {
 			this.type = type; this.bubbles = bub; this.cancelable = can;
 			this.relatedNode = relNode;
 			this.prevValue = prevVal; this.newValue = newVal;
 			this.attrName = attrName; this.attrChange = attrChange;
-		}
+		};
 		else evt.initEvent = function(type,bub,can) {
 			this.type = type; this.bubbles = bub; this.cancelable = can;
-		}
+		};
 		return evt;
-	}
+	};
 
 	IEtoW3C_hookupDOMEventsOn(window);
 	IEtoW3C_hookupDOMEventsOn(document);
@@ -225,7 +225,7 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		var newElt = document.IEtoW3C_createElement(tagName);
 		IEtoW3C_hookupDOMEventsOn(newElt);
 		return newElt;
-	}
+	};
 }
 
 /*=== DOM2 Core: ===*/
@@ -233,7 +233,7 @@ if(!document.implementation) {
 	document.implementation = {
 		hasFeature : function(feature,version) {},
 		createDocumentType : function(qName,pubId,sysId) {}
-	}
+	};
 }
 /* Experimental: add createDocument() -- IE6 fails on this, because it doesn't allow custom properties to be added to its partially-implemented document.implementation. Grr.
 if(!document.implementation.createDocument && window.ActiveXObject) {
@@ -247,7 +247,7 @@ if(!document.implementation.createDocument && window.ActiveXObject) {
 				} catch(e) {}
 			}
 			throw "No MSXML found on system";
-		}
+		};
 		var newDoc = new ActiveXObject(getProgID());
 		IEtoW3C_hookupDOMEventsOn(newDoc);
 		newDoc.onreadystatechange = function() {
@@ -257,9 +257,9 @@ if(!document.implementation.createDocument && window.ActiveXObject) {
 				newEvt.initEvent("load",true,true);
 				this.dispatchEvent(newEvt);
 			}
-		}
+		};
 		return newDoc;
-	}
+	};
 } */
 
 // Namespace methods (XML only):
@@ -269,7 +269,7 @@ if(isXML && !document.createElementNS && document.createElement) {
 		var elt = document.createElement(tagName);
 		elt.namespaceURI = ns;
 		return elt;
-	}
+	};
 }
 if(isXML && !document.getElementsByTagNameNS && document.getElementsByTagName) {
 	function hookupNamespaceMethodsOn(elt) {
@@ -280,8 +280,8 @@ if(isXML && !document.getElementsByTagNameNS && document.getElementsByTagName) {
 				if(allElts[i].namespaceURI == ns) nsElts[nsElts.length] = allElts[i];
 			}
 			return nsElts;
-		}
-	}
+		};
+	};
 	window.addEventListener("load",function(evt) {
 		var all = document.all;
 		for(var i=0; i<all.length; i++) hookupNamespaceMethodsOn(all[i]);
@@ -317,5 +317,5 @@ if(!window.getComputedStyle) {
 				return elt.style[jsProp];
 			}
 		};
-	}
+	};
 }
