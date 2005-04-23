@@ -57,6 +57,12 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		if(result == false) evt.preventDefault(); //"return false;" prevents default action
 		func = funcBody = null;
 	};
+	function IEtoW3C_stopPropagation() {
+		this.cancelBubble = true;
+	};
+	function IEtoW3C_preventDefault() {
+		this.returnValue = false;
+	};
 	function IEtoW3C_handleEvent(elt,evt) {
 		var i, j, tmp;
 		
@@ -68,8 +74,8 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		if(evt.cancelable == null) evt.cancelable = true;
 		evt.cancelBubble = false;
 		evt.returnValue = true;
-		evt.stopPropagation = function() {evt.cancelBubble=true;};
-		evt.preventDefault = function() {evt.returnValue=false;};
+		evt.stopPropagation = IEtoW3C_stopPropagation;
+		evt.preventDefault = IEtoW3C_preventDefault;
 		if(!evt.relatedTarget) evt.relatedTarget = evt.fromElement || evt.toElement || null;
 		evt.pageX = evt.clientX + document.body.scrollLeft;
 		evt.pageY = evt.clientY + document.body.scrollTop;
@@ -87,8 +93,8 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		}
 		//add document and window at top of tree:
 		tmp = ancestors[ancestors.length-1];
-		if(tmp != window) {
-			if(tmp != document) ancestors[ancestors.length] = document;
+		if(window != tmp) { //note the order of comparison is important here due to an IE quirk
+			if(document != tmp) ancestors[ancestors.length] = document;
 			ancestors[ancestors.length] = window;
 		}
 
@@ -130,45 +136,52 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		//clean up:
 		i = j = tmp = elt = elt.IEtoW3C_handler = ancestors = evt = /*evt.currentTarget = evt.target = evt.stopPropagation = evt.preventDefault = evt.relatedTarget = evt.pageX = evt.pageY = evt.eventPhase = evt.timeStamp = evt.charCode =*/ null;
 	};
+
+	function IEtoW3C_addEventListener(evtType,handler,capture) {
+		var onevent = this.IEtoW3C_onevent[evtType];
+		if(!onevent) {
+			onevent = this.IEtoW3C_onevent[evtType] = {capture:[],bubble:[]};
+			//set base listener to fire off custom event handling flow (it all starts here):
+			var thisRef = this;
+			if(this.attachEvent) this.attachEvent("on"+evtType, function() { IEtoW3C_handleEvent(thisRef); } );
+			else this["on"+evtType] = function() { IEtoW3C_handleEvent(thisRef); }; //IE Mac
+		}
+		var handlers = (capture) ? onevent.capture : onevent.bubble;
+		for(var i=0; i<handlers.length; i++) {
+			if(handlers[i] == handler) { //avoid duplicates; move duped handler to end:
+				for(var j=i; j<handlers.length-1; j++) handlers[j] = handlers[j+1];
+				handlers.length--;
+			}
+		}
+		handlers[handlers.length] = handler;
+		handlers = null;
+	};
+	
+	function IEtoW3C_removeEventListener(evtType,handler,capture) {
+		var onevent = this.IEtoW3C_onevent[evtType];
+		if(!onevent) return;
+		var handlers = (capture) ? onevent.capture : onevent.bubble;
+		for(var i=0; i<handlers.length; i++) { //remove any instances of handler from list:
+			if(handlers[i] == handler) {
+				for(var j=i; j<handlers.length-1; j++) handlers[j] = handlers[j+1];
+				handlers.length--;
+			}
+		}
+	};
+	
+	function IEtoW3C_dispatchEvent(evt) {
+		if(!evt.type) return;
+		evt.target = evt.currentTarget = this;
+		IEtoW3C_handleEvent(this,evt);
+	};
 	
 	function IEtoW3C_hookupDOMEventsOn(elt) {
 		if(elt.IEtoW3C_onevent) return;
 		elt.IEtoW3C_onevent = {};
 
-		elt.addEventListener = function(evtType,handler,capture) {
-			var onevent = this.IEtoW3C_onevent[evtType];
-			if(!onevent) {
-				onevent = this.IEtoW3C_onevent[evtType] = {capture:[],bubble:[]};
-				//set base listener to fire off custom event handling flow (it all starts here):
-				if(this.attachEvent) this.attachEvent("on"+evtType, function() { IEtoW3C_handleEvent(elt); } );
-				else this["on"+evtType] = function() { IEtoW3C_handleEvent(elt); }; //IE Mac
-			}
-			var handlers = (capture) ? onevent.capture : onevent.bubble;
-			for(var i=0; i<handlers.length; i++) {
-				if(handlers[i] == handler) { //avoid duplicates; move duped handler to end:
-					for(var j=i; j<handlers.length-1; j++) handlers[j] = handlers[j+1];
-					handlers.length--;
-				}
-			}
-			handlers[handlers.length] = handler;
-			handlers = null;
-		};
-		elt.removeEventListener = function(evtType,handler,capture) {
-			var onevent = this.IEtoW3C_onevent[evtType];
-			if(!onevent) return;
-			var handlers = (capture) ? onevent.capture : onevent.bubble;
-			for(var i=0; i<handlers.length; i++) { //remove any instances of handler from list:
-				if(handlers[i] == handler) {
-					for(var j=i; j<handlers.length-1; j++) handlers[j] = handlers[j+1];
-					handlers.length--;
-				}
-			}
-		};
-		elt.dispatchEvent = function(evt) {
-			if(!evt.type) return;
-			evt.target = evt.currentTarget = this;
-			IEtoW3C_handleEvent(this,evt);
-		};
+		elt.addEventListener = IEtoW3C_addEventListener;
+		elt.removeEventListener = IEtoW3C_removeEventListener;
+		elt.dispatchEvent = IEtoW3C_dispatchEvent;
 		IEtoW3C_grabEventAttributes(elt);
 	};
 	function IEtoW3C_unhookDOMEventsFrom(elt) {
