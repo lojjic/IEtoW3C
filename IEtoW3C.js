@@ -12,39 +12,19 @@
 
 
 
-//// Extend d.all and d.layers DOMs to understand d.getElementById
-/* XXX - this doesn't really belong here, since it's become a 
-         library for IE5+ only. */
-if(!document.getElementById) {
-	document.getElementById = function(id,contDoc) {
-		var d=document; var x=null;
-		if(d.layers) { //NS 4
-			if(!contDoc) contDoc=d;
-			if(contDoc[id]) x=contDoc[id];
-			else {
-				var lyrs=contDoc.layers;
-				for(var i=0;!x && lyrs && i<lyrs.length;i++) x=d.getElementById(id,lyrs[i].document);
-			}
-			if(x) x.style = x;
-		}
-		else if(d.all) x=d.all[id]; //MSIE 4
-		return x;
-	};
-}
-
-
 /*=== DOM2 Events: ===*/
 if (!window.addEventListener && document.all /*(remove to enable partial (buggy) MacIE support:)*/ && window.attachEvent) {
-	var IEtoW3C_evtAttrs = ["onmouseover","onmouseout","onmousemove","onclick","onchange","onfocus","onblur","onload","onkeypress"];
+	var IEtoW3C_evtAttrs = ["mouseover","mouseout","mousemove","click","change","focus","blur","load","keypress"];
 	function IEtoW3C_grabEventAttributes(elt) { //make on* attributes into DOM event listeners:
 		if(!elt.attachEvent) return; //HACK: don't do this on Mac, since we have to preserve the onclick property later to listen for events.
 		if(elt.nodeType != 1) return; //elements only
 		for(var i=0; i<IEtoW3C_evtAttrs.length; i++) {
-			var attr = (elt.getAttribute) ? elt.getAttribute(IEtoW3C_evtAttrs[i]) : null;
+			var evtName = IEtoW3C_evtAttrs[i];
+			var attr = (elt.getAttribute) ? elt.getAttribute("on"+evtName) : null;
 			if(attr) {
-				elt["IEtoW3C_"+IEtoW3C_evtAttrs[i]] = elt[IEtoW3C_evtAttrs[i]]; //use later to test if "return false" should preventDefault().
-				elt.addEventListener(IEtoW3C_evtAttrs[i].substring(2),IEtoW3C_execAttrEvent,false);
-				elt[IEtoW3C_evtAttrs[i]] = null;
+				elt["IEtoW3C_on"+evtName] = elt["on"+evtName]; //use later to test if "return false" should preventDefault().
+				elt.addEventListener(evtName,IEtoW3C_execAttrEvent,false);
+				elt["on"+evtName] = null;
 			}
 		}
 	};
@@ -192,25 +172,24 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 	};
 	document.createEvent = function(evtFam) {
 		var evt = {}; //new Event object
-		if(evtFam=="UIEvents") evt.initUIEvent = function(type,bub,can,view,det) {
-			this.type = type; this.bubbles = bub; this.cancelable = can;
-			this.view = view; this.detail = det;
-		};
-		else if(evtFam=="MouseEvents") evt.initMouseEvent = function(type,bub,can,view,det,sX,sY,cX,cY,ctrl,alt,shft,meta,btn,relTgt) {
-			this.type = type; this.bubbles = bub; this.cancelable = can;
-			this.view = view; this.detail = det;
-			this.screenX = sX; this.screenY = sY;
-			this.clientX = cX; this.clientY = cY;
-			this.ctrlKey = ctrl; this.altKey = alt;
-			this.shiftKey = shft; this.metaKey = meta;
-			this.button = btn; this.relatedTarget = relTgt;
-		};
-		else if(evtFam=="MutationEvents") evt.initMutationEvent = function(type,bub,can,relNode,prevVal,newVal,attrName,attrChange) {
-			this.type = type; this.bubbles = bub; this.cancelable = can;
-			this.relatedNode = relNode;
-			this.prevValue = prevVal; this.newValue = newVal;
-			this.attrName = attrName; this.attrChange = attrChange;
-		};
+		if(evtFam=="UIEvents") {
+			evt.initUIEvent = function(/*t,b,c,v,d*/) {
+				var initArgs = ["type","bubbles","cancelable","view","detail"];
+				for(var i=0,x; (x=initArgs[i]); i++) this[x]=arguments[i];
+			};
+		}
+		else if(evtFam=="MouseEvents") {
+			evt.initMouseEvent = function(/*t,b,c,v,d,sx,sy,cx,cy,ck,ak,sk,mk,b,r*/) {
+				var initArgs = ["type","bubbles","cancelable","view","detail","screenX","screenY","clientX","clientY","ctrlKey","altKey","shiftKey","metaKey","button","relatedTarget"];
+				for(var i=0,x; (x=initArgs[i]); i++) this[x]=arguments[i];
+			};
+		}
+		else if(evtFam=="MutationEvents") {
+			evt.initMutationEvent = function(/*t,b,c,r,p,n,an,ac*/) {
+				var initArgs = ["type","bubbles","cancelable","relatedNode","prevValue","newValue","attrName","attrChange"];
+				for(var i=0,x; (x=initArgs[i]); i++) this[x]=arguments[i];
+			};
+		}
 		else evt.initEvent = function(type,bub,can) {
 			this.type = type; this.bubbles = bub; this.cancelable = can;
 		};
