@@ -122,9 +122,12 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		if(!onevent) {
 			onevent = this.IEtoW3C_onevent[evtType] = {capture:[],bubble:[]};
 			//set base listener to fire off custom event handling flow (it all starts here):
+			//we cache a reference to the handler function so we can remove the listener during teardown
 			var thisRef = this;
-			if(this.attachEvent) this.attachEvent("on"+evtType, function() { IEtoW3C_handleEvent(thisRef); } );
-			else this["on"+evtType] = function() { IEtoW3C_handleEvent(thisRef); }; //IE Mac
+			if(!this.IEtoW3C_listen) this.IEtoW3C_listen = {/*evtType : handler*/};
+			var lstn = this.IEtoW3C_listen[evtType] = function() { IEtoW3C_handleEvent(thisRef) };
+			if(this.attachEvent) this.attachEvent("on"+evtType, lstn);
+			else this["on"+evtType] = lstn; //IE Mac
 		}
 		var handlers = (capture) ? onevent.capture : onevent.bubble;
 		for(var i=0; i<handlers.length; i++) {
@@ -164,12 +167,23 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		elt.dispatchEvent = IEtoW3C_dispatchEvent;
 		IEtoW3C_grabEventAttributes(elt);
 	};
+	
 	function IEtoW3C_unhookDOMEventsFrom(elt) {
-		elt.addEventListener = elt.removeEventListener = elt.dispatchEvent = /*elt.IEtoW3C_onevent =*/ null;
+		// detach all listeners attached in IEtoW3C_addEventListener above:
+		if(elt.IEtoW3C_listen) {
+			for(var i in elt.IEtoW3C_listen) {
+				if(elt.detachEvent) elt.detachEvent("on"+i, elt.IEtoW3C_listen[i]);
+				else elt["on"+i] = null;
+			}
+		}
+		// remove cached "onevent" attributes:
 		for(var i=0; i<IEtoW3C_evtAttrs.length; i++) {
 			elt["IEtoW3C_tmp"+IEtoW3C_evtAttrs[i]] = null;
 		}
+		// destroy all other added properties/methods:
+		elt.IEtoW3C_listen = elt.IEtoW3C_onevent = elt.addEventListener = elt.removeEventListener = elt.dispatchEvent = null;
 	};
+	
 	document.createEvent = function(evtFam) {
 		var evt = {}; //new Event object
 		if(evtFam=="UIEvents") {
@@ -203,7 +217,7 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		for(var i=0; i<all.length; i++) IEtoW3C_hookupDOMEventsOn(all[i]);
 	},false);
 
-	window.addEventListener("beforeunload",function() { //clean up:
+	window.addEventListener("unload",function() { //clean up:
 		IEtoW3C_unhookDOMEventsFrom(window);
 		IEtoW3C_unhookDOMEventsFrom(document);
 		var all = document.all;
