@@ -102,13 +102,7 @@
 
 <h2>Known Issues:</h2>
 <ul>
-	<li><p>Memory leaks pretty bad. General Numbers as of 2002-11-16:</p>
-		<ul>
-			<li>Reload test document -> increase ~200K memory</li>
-			<li>Create new element -> increase ~2K memory</li>
-		</ul>
-		<p>I consider this acceptable for most lightweight use, but not for large or constantly-used applications. I will continue to investigate, but this may be due to weaknesses in IE's JScript implementation, and there's unfortunately nothing I can do about that.</p>
-	</li>
+	<li>In the past there were severe problems with memory leaks.  These seem to have been mostly solved as of 2005-04-27, but may still occur in small doses.</li>
 	<li><p>As of 2002-10-15, Support for MSIE5 Macintosh has been added. However, this support is fragile and has some serious bugs, so it has been disabled in the first line of the DOM2 Events section in the script.  The bugs are:</p>
 		<ul>
 			<li>Since Mac IE doesn't recognize <code>Element.attachEvent()</code>, the core event listening is done by using the old <code>Element.onevent=handler;</code> syntax. The unfortunate side-effect of this is that if any script uses that syntax to set new event listeners, all the listeners set by <code>addEventListener()</code> will be lost. However, if all scripts consistengly use <code>addEventListener()</code> instead of the old syntax, it should work well.</li>
