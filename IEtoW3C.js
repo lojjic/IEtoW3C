@@ -32,7 +32,7 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		var func = this["IEtoW3C_on"+evt.type].toString();
 		var funcBody = func.substring(func.indexOf("{")+1, func.lastIndexOf("}"));
 		funcBody = funcBody.replace(/([\W])this([\W])/,"$1event.currentTarget$2"); //fix "this" references
-		funcBody = "var tmpFunc = function(event) {" + funcBody + "}; tmpFunc(evt);";
+		funcBody = "(function(event) {" + funcBody + "})(evt);";
 		var result = eval(funcBody);
 		if(result == false) evt.preventDefault(); //"return false;" prevents default action
 		func = funcBody = null;
@@ -44,16 +44,12 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		this.returnValue = false;
 	};
 	function IEtoW3C_handleEvent(elt,evt) {
-		var i, j, tmp;
-		
 		//fixup event object with DOM properties and methods:
 		if(!evt) var evt = window.event;
 		if(!evt.currentTarget) evt.currentTarget = elt;
 		if(!evt.target) evt.target = evt.srcElement || elt;
 		if(evt.bubbles == null) evt.bubbles = true;
 		if(evt.cancelable == null) evt.cancelable = true;
-		evt.cancelBubble = false;
-		evt.returnValue = true;
 		evt.stopPropagation = IEtoW3C_stopPropagation;
 		evt.preventDefault = IEtoW3C_preventDefault;
 		if(!evt.relatedTarget) evt.relatedTarget = evt.fromElement || evt.toElement || null;
@@ -63,9 +59,10 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		if(String.fromCharCode(evt.keyCode).match(/[\w\d]/)) { //this is incomplete list of keyChars.
 			evt.charCode = evt.keyCode; evt.keyCode = 0;
 		} else evt.charCode = 0;
-
+		
 		//get all ancestors:
-		var ancestors = []; tmp = evt.target;
+		var ancestors = [];
+		var tmp = evt.target;
 		while(tmp) {
 			IEtoW3C_grabEventAttributes(tmp);
 			ancestors[ancestors.length] = tmp;
@@ -77,44 +74,44 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 			if(document != tmp) ancestors[ancestors.length] = document;
 			ancestors[ancestors.length] = window;
 		}
-
+		
 		//don't handle if anything higher up will also handle (prevents duplicate firing):
-		for(i=0; i<ancestors.length; i++) {
-			if(!ancestors[i].IEtoW3C_onevent) IEtoW3C_hookupDOMEventsOn(ancestors[i]);
-			if(ancestors[i].IEtoW3C_onevent[evt.type]) {
-				if(ancestors[i] != elt) ancestors = [];
-				break;
-			}
+		for(var i=ancestors.length-1; (tmp=ancestors[i]); i--) {
+			if(!tmp.IEtoW3C_onevent) IEtoW3C_hookupDOMEventsOn(tmp);
+			if(tmp === elt) break; //stop at currentTarget
+			var hdlrs = tmp.IEtoW3C_onevent[evt.type];
+			if(hdlrs && ((hdlrs.capture && hdlrs.capture[0]) || (hdlrs.bubble && hdlrs.bubble[0]))) return; //exit if handler found
 		}
-
+		
 		//fire each handler in correct order, passing the event object as sole parameter:
-		//capturing:
+		evt.cancelBubble = false;
+		evt.returnValue = true;
 		evt.eventPhase = 1;
-		for(i=ancestors.length-1; i>=0 && (!evt.cancelable || !evt.cancelBubble); i--) {
+		//capturing:
+		for(var i=ancestors.length-1; (tmp = ancestors[i]) && (!evt.cancelable || !evt.cancelBubble); i--) {
 			if(i==0) evt.eventPhase = 2;
-			evt.currentTarget = ancestors[i];
-			tmp = ancestors[i].IEtoW3C_onevent[evt.type];
-			if(tmp) for(j=0; j<tmp.capture.length; j++) {
-				elt.IEtoW3C_handler = tmp.capture[j]; //make "this" refer to element
-				elt.IEtoW3C_handler(evt);
+			evt.currentTarget = tmp;
+			var hdlrs = tmp.IEtoW3C_onevent[evt.type];
+			for(var j=0; hdlrs && j<hdlrs.capture.length; j++) {
+				tmp.IEtoW3C_handler = hdlrs.capture[j]; //make "this" refer to currentTarget
+				tmp.IEtoW3C_handler(evt);
+				tmp.IEtoW3C_handler = null;
 			}
 		}
 		//bubbling:
-		for(i=0; i<ancestors.length && (!evt.cancelable || !evt.cancelBubble); i++) {
-			if(ancestors[i]!=evt.target) evt.eventPhase = 3;
-			evt.currentTarget = ancestors[i];
-			tmp = ancestors[i].IEtoW3C_onevent[evt.type];
-			if(tmp) for(j=0; j<tmp.bubble.length; j++) {
-				elt.IEtoW3C_handler = tmp.bubble[j]; //make "this" refer to element
-				elt.IEtoW3C_handler(evt);
+		for(var i=0; (tmp = ancestors[i]) && (!evt.cancelable || !evt.cancelBubble); i++) {
+			if(tmp != evt.target) evt.eventPhase = 3;
+			evt.currentTarget = tmp;
+			var hdlrs = tmp.IEtoW3C_onevent[evt.type];
+			for(var j=0; hdlrs && j<hdlrs.bubble.length; j++) {
+				tmp.IEtoW3C_handler = hdlrs.bubble[j]; //make "this" refer to currentTarget
+				tmp.IEtoW3C_handler(evt);
+				tmp.IEtoW3C_handler = null;
 			}
 		}
 
-		//replace keyCode so form fields will get keystroke
+		//restore keyCode so form fields will get keystroke
 		if(evt.charCode > 0 && evt.keyCode == 0) evt.keyCode = evt.charCode;
-
-		//clean up:
-		i = j = tmp = elt = elt.IEtoW3C_handler = ancestors = evt = /*evt.currentTarget = evt.target = evt.stopPropagation = evt.preventDefault = evt.relatedTarget = evt.pageX = evt.pageY = evt.eventPhase = evt.timeStamp = evt.charCode =*/ null;
 	};
 
 	function IEtoW3C_addEventListener(evtType,handler,capture) {
@@ -131,7 +128,7 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		}
 		var handlers = (capture) ? onevent.capture : onevent.bubble;
 		for(var i=0; i<handlers.length; i++) {
-			if(handlers[i] == handler) { //avoid duplicates; move duped handler to end:
+			if(handlers[i] === handler) { //avoid duplicates; move duped handler to end:
 				for(var j=i; j<handlers.length-1; j++) handlers[j] = handlers[j+1];
 				handlers.length--;
 			}
@@ -145,7 +142,7 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		if(!onevent) return;
 		var handlers = (capture) ? onevent.capture : onevent.bubble;
 		for(var i=0; i<handlers.length; i++) { //remove any instances of handler from list:
-			if(handlers[i] == handler) {
+			if(handlers[i] === handler) {
 				for(var j=i; j<handlers.length-1; j++) handlers[j] = handlers[j+1];
 				handlers.length--;
 			}
