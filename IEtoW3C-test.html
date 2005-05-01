@@ -30,7 +30,7 @@ li {border:0; list-style-type:none; display:block; margin:0; padding:0; font-siz
 
 <script type="text/javascript" src="IEtoW3C-loader.js"></script>
 <script type="text/javascript">
-//document.addEventListener("mousemove",function(){window.status += "."},false);
+
 function output(txt) {
 	var out = document.getElementById("output").getElementsByTagName("ul")[0];
 	var li = document.createElement("li");
@@ -53,126 +53,12 @@ function showProps(evt) {
 	writeProp(props.length+1,"target nodeName",evt.target.nodeName);
 }
 
-function onTest2Loaded(evt) {
-	document.getElementById("test2_1").addEventListener("mouseover",function(evt){output("mouse over"); showProps(evt);},false)
-	document.getElementById("test2_2").addEventListener("mouseout",function(evt){output("mouse out"); showProps(evt);},false)
-	document.getElementById("test2_4").addEventListener("click",function(evt){output("clicked"); showProps(evt);},false)
-	document.getElementById("test2_5").addEventListener("keypress",function(evt){output("key pressed"); showProps(evt);},false)
-}
-
-function onTest3Penetrated(evt) {
-	output('moused over; test #3 passed.');
-	showProps(evt);
-}
-
-function onTest5Loaded(evt) {
-	var areas = document.getElementById("test5").getElementsByTagName("div");
-	for(var i=0; i<areas.length; i++) {
-		areas[i].addEventListener("click",function(evt){output("Event handled by "+evt.currentTarget.firstChild.nodeValue+", phase "+evt.eventPhase); showProps(evt);},true);
-	}
-}
-
-function onTest6Loaded(evt) {
-	var areas = document.getElementById("test6").getElementsByTagName("div");
-	for(var i=0; i<areas.length; i++) {
-		areas[i].addEventListener("click",function(evt){output("Event handled by "+evt.currentTarget.firstChild.nodeValue+", phase "+evt.eventPhase); showProps(evt);},false);
-	}
-}
-
-function onTest7Loaded(evt) {
-	var areas = document.getElementById("test7").getElementsByTagName("div");
-	for(var i=0; i<areas.length; i++) {
-		areas[i].addEventListener("click",function(evt){output("Event handled by "+evt.currentTarget.firstChild.nodeValue+", phase "+evt.eventPhase); showProps(evt); evt.stopPropagation();},false);
-	}
-}
-
-function onTest8LinkPoked(evt) {
-	output('If you do not see an alert, then test #8 passed.');
-	showProps(evt);
-	evt.preventDefault();
-}
-
-function onTest9Loaded(evt) {
-	document.getElementById("test9_2").addEventListener("mouseover",onTest9ButtonPenetrated,false);
-}
-
-function onTest9ButtonPenetrated(evt) {
-	output("moused over (caught by DOM event listener)");
-	showProps(evt);
-}
-
-function onTest9ButtonPoked(evt) {
-	var newEvt = document.createEvent("MouseEvents");
-	newEvt.initMouseEvent("mouseover",true,true,window,1,0,0,0,0,false,false,false,false,0,null);
-	document.getElementById("test9_2").dispatchEvent(newEvt);
-}
-
-function onTest10ButtonPoked(evt) {
-	//make second button listen for custom event:
-	var btn = document.getElementById("test10_2");
-	btn.addEventListener("thisisnotarealevent",onTest10CustomEventFired,false);
-
-	var newEvt = document.createEvent("Events");
-	newEvt.initEvent("thisisnotarealevent",true,true);
-	btn.dispatchEvent(newEvt);
-}
-
-function onTest10CustomEventFired(evt) {
-	output("custom 'thisisnotarealevent' event fired; test #10 passed.");
-	showProps(evt);
-}
-
-function onTest11ButtonPoked(evt) {
-	var elt = document.createElement("button");
-		elt.addEventListener("mouseover",function(evt){output("new element moused over; test #11 passed."); showProps(evt);},false);
-		elt.appendChild(document.createTextNode("mouseover"));
-	document.getElementById("test11_out").appendChild(elt);
-}
-
-function onTestXMLImportButtonPoked(evt) {
-	var doc = document.implementation.createDocument("","","");
-	doc.addEventListener("load",onTestXMLImported,false);
-	doc.load("assets/xmldoc.xml");
-}
-
-function onTestXMLImported(evt) {
-	output(this.documentElement);
-}
-
-function onTestNSGetButtonPoked(evt) {
-	var num = document.getElementById('testNS').getElementsByTagNameNS('http://www.w3.org/1999/xhtml','button').length;
-	output('There are ' + num + ' buttons with an XHTML namespace in this test');
-}
-
-function onTestNSCreateButtonPoked(evt) {
-	var btn = document.createElementNS('http://www.w3.org/1999/xhtml','button');
-	btn.appendChild(document.createTextNode("click me"));
-	btn.addEventListener("click",function(){output('button has namespaceURI ' + this.namespaceURI);},false);
-	document.getElementById('testNS').appendChild(btn);
-}
-
-function onDocumentPoked(evt) {
-	output("document clicked");
-	showProps(evt);
-}
-
-function onWindowPoked(evt) {
-	output("window clicked");
-	showProps(evt);
-}
-
 function onWindowLoaded(evt) {
 	output("Window fully loaded; test #1 passed.");
 	showProps(evt);
-	onTest2Loaded(evt);
-	onTest5Loaded(evt);
-	onTest6Loaded(evt);
-	onTest7Loaded(evt);
-	onTest9Loaded(evt);
 }
 
 window.addEventListener("load",onWindowLoaded,false);
-
 
 </script>
 
@@ -190,7 +76,15 @@ window.addEventListener("load",onWindowLoaded,false);
 
 	<div id="test2">
 		<h2>2) Add listeners on load</h2>
-
+		<script type="text/javascript">
+			function onTest2Loaded(evt) {
+				document.getElementById("test2_1").addEventListener("mouseover",function(evt){output("mouse over"); showProps(evt);},false)
+				document.getElementById("test2_2").addEventListener("mouseout",function(evt){output("mouse out"); showProps(evt);},false)
+				document.getElementById("test2_4").addEventListener("click",function(evt){output("clicked"); showProps(evt);},false)
+				document.getElementById("test2_5").addEventListener("keypress",function(evt){output("key pressed"); showProps(evt);},false)
+			}
+			window.addEventListener("load",onTest2Loaded,false);
+		</script>
 		<p>The following elements should all have event listeners, assigned automatically when the window loads. See feedback to the right.</p>
 		<p>
 			<button id="test2_1">mouseover</button>
@@ -198,16 +92,20 @@ window.addEventListener("load",onWindowLoaded,false);
 			<button id="test2_4">click</button>
 			<input type="text" id="test2_5" value="keypress" />
 		</p>
-
 	</div>
 
 	<div id="test3">
 		<h2>3) Add listener on demand</h2>
+		<script type="text/javascript">
+			function onTest3Penetrated(evt) {
+				output('moused over; test #3 passed.');
+				showProps(evt);
+			}
+		</script>
 		<p>Click the first button to add a mouseover event listener to the second button.</p>
 		<p>
 			<button onclick="document.getElementById('test3_1').addEventListener('mouseover',onTest3Penetrated,false);">click to add listener</button>
 			<button id="test3_1">mouseover</button>
-
 		</p>
 	</div>
 
@@ -219,18 +117,39 @@ window.addEventListener("load",onWindowLoaded,false);
 
 	<div id="test5">
 		<h2>5) Event Capturing</h2>
+		
+		<script type="text/javascript">
+			function onTest5Loaded(evt) {
+				var areas = document.getElementById("test5").getElementsByTagName("div");
+				for(var i=0; i<areas.length; i++) {
+					areas[i].addEventListener("click",function(evt){output("Event handled by "+evt.currentTarget.firstChild.nodeValue+", phase "+evt.eventPhase); showProps(evt);},true);
+				}
+			}
+			window.addEventListener("load",onTest5Loaded,false);
+		</script>
+		
 		<p>Each of the areas below has a click event listener set for the capturing phase (when the event is moving down through the DOM tree).  When you click the innermost area (note that due to an IE quirk you have to click the text), the areas should handle the event from outer to inner.</p>
 		<p>Event Phases: 1 = capturing phase; 2 = at target; 3 = bubbling phase.</p>
+		
 		<div class="nested">area 1
 			<div class="nested">area 2
 				<div class="nested">area 3</div>
-
 			</div>
 		</div>
 	</div>
 
 	<div id="test6">
 		<h2>6) Event Bubbling</h2>
+		<script type="text/javascript">
+			function onTest6Loaded(evt) {
+				var areas = document.getElementById("test6").getElementsByTagName("div");
+				for(var i=0; i<areas.length; i++) {
+					areas[i].addEventListener("click",function(evt){output("Event handled by "+evt.currentTarget.firstChild.nodeValue+", phase "+evt.eventPhase); showProps(evt);},false);
+				}
+			}
+			window.addEventListener("load",onTest6Loaded,false);
+		</script>
+		
 		<p>Each of the areas below has a click event listener set for the bubbling phase (when the event is moving up through the DOM tree).  When you click the innermost area (note that due to an IE quirk you have to click the text), the areas should handle the event from inner to outer.</p>
 		<p>Event Phases: 1 = capturing phase; 2 = at target; 3 = bubbling phase.</p>
 
@@ -244,6 +163,16 @@ window.addEventListener("load",onWindowLoaded,false);
 	<div id="test7">
 		<h2>7) stopPropagation()</h2>
 
+		<script type="text/javascript">
+			function onTest7Loaded(evt) {
+				var areas = document.getElementById("test7").getElementsByTagName("div");
+				for(var i=0; i<areas.length; i++) {
+					areas[i].addEventListener("click",function(evt){output("Event handled by "+evt.currentTarget.firstChild.nodeValue+", phase "+evt.eventPhase); showProps(evt); evt.stopPropagation();},false);
+				}
+			}
+			window.addEventListener("load",onTest7Loaded,false);
+		</script>
+		
 		<p>This is exactly the same as the bubbling test above, except that each area's event handler calls Event.stopPropagation() so the event will not continue to the other areas.</p>
 		<div class="nested">area 1
 			<div class="nested">area 2
@@ -253,29 +182,69 @@ window.addEventListener("load",onWindowLoaded,false);
 	</div>
 
 	<div id="test8">
-
 		<h2>8) preventDefault()</h2>
+		
+		<script type="text/javascript">
+			function onTest8LinkPoked(evt) {
+				output('If you do not see an alert, then test #8 passed.');
+				showProps(evt);
+				evt.preventDefault();
+			}
+		</script>
+		
 		<p>Click the buttons to add/remove a listener on the link below.  When the listener is added, the event's default action should be ignored, and you should not get the alert.</p>
 		<p>
 			<button onclick="document.getElementById('test8_1').addEventListener('click',onTest8LinkPoked,false);">click to add listener</button>
 			<button onclick="document.getElementById('test8_1').removeEventListener('click',onTest8LinkPoked,false);">click to remove listener</button>
 		</p>
 		<p><a href="javascript:alert('Link was followed.'); void 0;" id="test8_1">this is a link to a javascript alert.</a></p>
-
 	</div>
 
 	<div id="test9">
 		<h2>9) Fire event elsewhere on demand</h2>
+		
+		<script type="text/javascript">
+			function onTest9Loaded(evt) {
+				document.getElementById("test9_2").addEventListener("mouseover",onTest9ButtonPenetrated,false);
+			}
+			function onTest9ButtonPenetrated(evt) {
+				output("moused over (caught by DOM event listener)");
+				showProps(evt);
+			}
+			function onTest9ButtonPoked(evt) {
+				var newEvt = document.createEvent("MouseEvents");
+				newEvt.initMouseEvent("mouseover",true,true,window,1,0,0,0,0,false,false,false,false,0,null);
+				document.getElementById("test9_2").dispatchEvent(newEvt);
+			}
+			window.addEventListener("load",onTest9Loaded,false);
+		</script>
+		
 		<p>The second button listens for mouseover events.  Click the first button to manually create and dispatch a mouseover event, and see that it works with both an "onmouseover" attribute <em>and</em> a DOM event listener.</p>
 		<p>
 			<button id="test9_1" onclick="onTest9ButtonPoked(event);">click to fire event</button>
-
 			<button id="test9_2" onmouseover="output('moused over (caught by \'onmouseover\' attribute)');">mouseover</button>
 		</p>
 	</div>
 
 	<div id="test10">
 		<h2>10) Fire custom event on demand</h2>
+		
+		<script type="text/javascript">
+			function onTest10ButtonPoked(evt) {
+				//make second button listen for custom event:
+				var btn = document.getElementById("test10_2");
+				btn.addEventListener("thisisnotarealevent",onTest10CustomEventFired,false);
+			
+				var newEvt = document.createEvent("Events");
+				newEvt.initEvent("thisisnotarealevent",true,true);
+				btn.dispatchEvent(newEvt);
+			}
+			function onTest10CustomEventFired(evt) {
+				output("custom 'thisisnotarealevent' event fired; test #10 passed.");
+				showProps(evt);
+			}
+		</script>
+		
 		<p>The second button below listens for a custom "thisisnotarealevent" event. The first button creates a custom event of that type and dispatches it to the second.</p>
 		<p>
 
@@ -286,6 +255,16 @@ window.addEventListener("load",onWindowLoaded,false);
 
 	<div id="test11">
 		<h2>11) Add listener to DOM-created element</h2>
+		
+		<script type="text/javascript">
+			function onTest11ButtonPoked(evt) {
+				var elt = document.createElement("button");
+					elt.addEventListener("mouseover",function(evt){output("new element moused over; test #11 passed."); showProps(evt);},false);
+					elt.appendChild(document.createTextNode("mouseover"));
+				document.getElementById("test11_out").appendChild(elt);
+			}
+		</script>
+		
 		<p>Click the button below to add a new element via the DOM with a mouseover event listener attached.</p>
 
 		<p><button onclick="onTest11ButtonPoked(event);">click to create element</button></p>
@@ -294,13 +273,24 @@ window.addEventListener("load",onWindowLoaded,false);
 
 	<div id="test12">
 		<h2>12) Listeners on document and window</h2>
+		
+		<script type="text/javascript">
+			function onTest12DocumentPoked(evt) {
+				output("document clicked; test 12 passed.");
+				showProps(evt);
+			}
+			function onTest12WindowPoked(evt) {
+				output("window clicked; test 12 passed.");
+				showProps(evt);
+			}
+		</script>
+		
 		<p>The "document" and "window" objects are not normal elements, but still can register event listeners.  Click the buttons below to add/remove event listeners on document and window.</p>
 		<p>
-
-			<button onclick="document.addEventListener('click',onDocumentPoked,false);">add "click" listener to document</button>
-			<button onclick="document.removeEventListener('click',onDocumentPoked,false);">remove "click" listener from document</button>
-			<button onclick="window.addEventListener('click',onWindowPoked,false);">add "click" listener to window</button>
-			<button onclick="window.removeEventListener('click',onWindowPoked,false);">remove "click" listener from window</button>
+			<button onclick="document.addEventListener('click',onTest12DocumentPoked,false);">add "click" listener to document</button>
+			<button onclick="document.removeEventListener('click',onTest12DocumentPoked,false);">remove "click" listener from document</button>
+			<button onclick="window.addEventListener('click',onTest12WindowPoked,false);">add "click" listener to window</button>
+			<button onclick="window.removeEventListener('click',onTest12WindowPoked,false);">remove "click" listener from window</button>
 		</p>
 	</div>
 
@@ -311,8 +301,77 @@ window.addEventListener("load",onWindowLoaded,false);
 	</div>
 
 	<div id="test14">
-		<h2>13) "this" in HTML event attributes</h2>
+		<h2>14) "this" in HTML event attributes</h2>
 		<p><a href="javascript:alert('Boo.');" onclick="output(this.href); return false;">Clicking this should output the href attribute of this link, "javascript:alert('Boo.');", but not follow it.</a></p>
+	</div>
+	
+	<div id="test15">
+		<h2>15) Reusing <code>Event</code> object</h2>
+		
+		<script type="text/javascript">
+			var test15EventObject = document.createEvent("Events");
+			
+			function onTest15ButtonPoked(evt) {
+				//make second button listen for custom event:
+				var btn = document.getElementById("test15_2");
+				btn.addEventListener("thisisnotarealevent",onTest15CustomEventFired,false);
+			
+				test15EventObject.initEvent("thisisnotarealevent",true,true);
+				btn.dispatchEvent(test15EventObject);
+			}
+			
+			function onTest15CustomEventFired(evt) {
+				output("custom event fired.");
+				showProps(evt);
+			}
+		</script>
+		
+		<p>This test is identical to Test 10, except that the same Event object is used every time.  This tests that the Event object is properly reset each time it is dispatched.</p>
+		<p>
+			<button id="test15_1" onclick="onTest15ButtonPoked(event);">click to fire custom event</button>
+			<button id="test15_2">handles "thisisnotarealevent"</button>
+		</p>
+	</div>
+	
+	<div id="test16">
+		<h2>16) Mouse events on <code>window</code></h2>
+		
+		<script type="text/javascript">
+			function onTest16Click(evt) {
+				output("window caught a click");
+				showProps(evt);
+			}
+			function onTest16Mouseover(evt) {
+				output("window caught a mouseover");
+				showProps(evt);
+			}
+			function onTest16Mouseout(evt) {
+				output("window caught a mouseout");
+				showProps(evt);
+			}
+			function onTest16Mousemove(evt) {
+				output("window caught a mousemove");
+				showProps(evt);
+			}
+		</script>
+		
+		<p>This tests that mouse event listeners can be successfully set on the <code>window</code> object.  (In IE, mouse events natively fire on <code>document</code> but not on <code>window</code>.)</p>
+		<p>
+			<button onclick="window.addEventListener('click',onTest16Click,false);">Add "click" listener to window</button>
+			<button onclick="window.removeEventListener('click',onTest16Click,false);">Remove "click" listener from window</button>
+		</p>
+		<p>
+			<button onclick="window.addEventListener('mouseover',onTest16Mouseover,false);">Add "mouseover" listener to window</button>
+			<button onclick="window.removeEventListener('mouseover',onTest16Mouseover,false);">Remove "mouseover" listener from window</button>
+		</p>
+		<p>
+			<button onclick="window.addEventListener('mouseout',onTest16Mouseout,false);">Add "mouseout" listener to window</button>
+			<button onclick="window.removeEventListener('mouseout',onTest16Mouseout,false);">Remove "mouseout" listener from window</button>
+		</p>
+		<p>
+			<button onclick="window.addEventListener('mousemove',onTest16Mousemove,false);">Add "mousemove" listener to window</button>
+			<button onclick="window.removeEventListener('mousemove',onTest16Mousemove,false);">Remove "mousemove" listener from window</button>
+		</p>
 	</div>
 	
 	<!--
@@ -320,12 +379,40 @@ window.addEventListener("load",onWindowLoaded,false);
 	
 	<div id="testImport">
 		<h2>14) XML Document/DOM Import</h2>
+		
+		<script type="text/javascript">
+			function onTestXMLImportButtonPoked(evt) {
+				var doc = document.implementation.createDocument("","","");
+				doc.addEventListener("load",onTestXMLImported,false);
+				doc.load("assets/xmldoc.xml");
+			}
+			
+			function onTestXMLImported(evt) {
+				output(this.documentElement);
+			}
+		</script>
+		
 		<p>Clicking the button below should import an external XML document, and show the root element name.</p>
 		<button onclick="onTestXMLImportButtonPoked(event);">Import XML</button>
 	</div>
 
 	<div id="testNS">
 		<h2>15) Test DOM Core namespace methods</h2>
+		
+		<script type="text/javascript">
+			function onTestNSGetButtonPoked(evt) {
+				var num = document.getElementById('testNS').getElementsByTagNameNS('http://www.w3.org/1999/xhtml','button').length;
+				output('There are ' + num + ' buttons with an XHTML namespace in this test');
+			}
+			
+			function onTestNSCreateButtonPoked(evt) {
+				var btn = document.createElementNS('http://www.w3.org/1999/xhtml','button');
+				btn.appendChild(document.createTextNode("click me"));
+				btn.addEventListener("click",function(){output('button has namespaceURI ' + this.namespaceURI);},false);
+				document.getElementById('testNS').appendChild(btn);
+			}
+		</script>
+		
 		<p>The first button should show the number of buttons currently in this test. The second button should create a new button with the XHTML namespace.</p>
 		<button onclick="onTestNSGetButtonPoked(event);">test getElementsByTagNameNS</button>
 		<button onclick="onTestNSCreateButtonPoked(event);">test createElementNS()</button>
