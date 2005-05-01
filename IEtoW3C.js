@@ -35,10 +35,9 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		funcBody = "(function(event) {" + funcBody + "})(evt);";
 		var result = eval(funcBody);
 		if(result == false) evt.preventDefault(); //"return false;" prevents default action
-		func = funcBody = null;
 	};
 	function IEtoW3C_stopPropagation() {
-		this.cancelBubble = true;
+		this.IEtoW3C_canceled = true;
 	};
 	function IEtoW3C_preventDefault() {
 		this.returnValue = false;
@@ -59,6 +58,11 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		if(String.fromCharCode(evt.keyCode).match(/[\w\d]/)) { //this is incomplete list of keyChars.
 			evt.charCode = evt.keyCode; evt.keyCode = 0;
 		} else evt.charCode = 0;
+		evt.returnValue = true;
+		evt.IEtoW3C_canceled = false;
+		
+		//make sure the event doesn't bubble to ancestors so it doesn't get handled more than once:
+		evt.cancelBubble = true;
 		
 		//get all ancestors:
 		var ancestors = [];
@@ -70,25 +74,13 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		}
 		//add document and window at top of tree:
 		tmp = ancestors[ancestors.length-1];
-		if(window != tmp) { //note the order of comparison is important here due to an IE quirk
-			if(document != tmp) ancestors[ancestors.length] = document;
-			ancestors[ancestors.length] = window;
-		}
-		
-		//don't handle if anything higher up will also handle (prevents duplicate firing):
-		for(var i=ancestors.length-1; (tmp=ancestors[i]); i--) {
-			if(!tmp.IEtoW3C_onevent) IEtoW3C_hookupDOMEventsOn(tmp);
-			if(tmp === elt) break; //stop at currentTarget
-			var hdlrs = tmp.IEtoW3C_onevent[evt.type];
-			if(hdlrs && ((hdlrs.capture && hdlrs.capture[0]) || (hdlrs.bubble && hdlrs.bubble[0]))) return; //exit if handler found
-		}
+		if(tmp === document.documentElement) tmp = ancestors[ancestors.length] = document;
+		if(tmp === document) ancestors[ancestors.length] = window;
 		
 		//fire each handler in correct order, passing the event object as sole parameter:
-		evt.cancelBubble = false;
-		evt.returnValue = true;
-		evt.eventPhase = 1;
 		//capturing:
-		for(var i=ancestors.length-1; (tmp = ancestors[i]) && (!evt.cancelable || !evt.cancelBubble); i--) {
+		evt.eventPhase = 1;
+		for(var i=ancestors.length-1; (tmp = ancestors[i]) && (!evt.cancelable || !evt.IEtoW3C_canceled); i--) {
 			if(i==0) evt.eventPhase = 2;
 			evt.currentTarget = tmp;
 			var hdlrs = tmp.IEtoW3C_onevent[evt.type];
@@ -99,7 +91,7 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 			}
 		}
 		//bubbling:
-		for(var i=0; (tmp = ancestors[i]) && (!evt.cancelable || !evt.cancelBubble); i++) {
+		for(var i=0; (tmp = ancestors[i]) && (!evt.cancelable || !evt.IEtoW3C_canceled); i++) {
 			if(tmp != evt.target) evt.eventPhase = 3;
 			evt.currentTarget = tmp;
 			var hdlrs = tmp.IEtoW3C_onevent[evt.type];
@@ -126,15 +118,9 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 			if(this.attachEvent) this.attachEvent("on"+evtType, lstn);
 			else this["on"+evtType] = lstn; //IE Mac
 		}
+		this.removeEventListener(evtType,handler,capture); //avoid duplicates
 		var handlers = (capture) ? onevent.capture : onevent.bubble;
-		for(var i=0; i<handlers.length; i++) {
-			if(handlers[i] === handler) { //avoid duplicates; move duped handler to end:
-				for(var j=i; j<handlers.length-1; j++) handlers[j] = handlers[j+1];
-				handlers.length--;
-			}
-		}
 		handlers[handlers.length] = handler;
-		handlers = null;
 	};
 	
 	function IEtoW3C_removeEventListener(evtType,handler,capture) {
@@ -212,6 +198,11 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 	window.addEventListener("load",function() {
 		var all = document.all;
 		for(var i=0; i<all.length; i++) IEtoW3C_hookupDOMEventsOn(all[i]);
+		
+		//set dummy listeners for mouse events that natively fire on document but
+		//not on window, so they will bubble up in our custom loop:
+		var dummies = ["click","mouseover","mouseout","mousemove"];
+		for(var i=0; i<dummies.length; i++) document.addEventListener(dummies[i],function(){},false);
 	},false);
 
 	window.addEventListener("unload",function() { //clean up:
