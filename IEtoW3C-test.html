@@ -374,6 +374,48 @@ window.addEventListener("load",onWindowLoaded,false);
 		</p>
 	</div>
 	
+	<div id="test17">
+		<h2>17) Event.bubbles</h2>
+		
+		<script type="text/javascript">
+			function onTest17Button1Poked() {
+				var evt = document.createEvent("Events");
+				evt.initEvent("test17CustomEvent",true,true);
+				document.getElementById("test17_2").dispatchEvent(evt);
+			}
+			function onTest17Button2Poked() {
+				var evt = document.createEvent("Events");
+				evt.initEvent("test17CustomEvent",false,true);
+				document.getElementById("test17_2").dispatchEvent(evt);
+			}
+			
+			function onTest17_1EventHeard(evt) {
+				output("Area 1 heard the event.");
+				showProps(evt);
+			}
+			function onTest17_2EventHeard(evt) {
+				output("Area 2 heard the event.");
+				showProps(evt);
+			}
+			
+			function onTest17Loaded() {
+				document.getElementById("test17_1").addEventListener("test17CustomEvent",onTest17_1EventHeard,false);
+				document.getElementById("test17_2").addEventListener("test17CustomEvent",onTest17_2EventHeard,false);
+				document.getElementById("test17_1").addEventListener("test17CustomEvent",onTest17_1EventHeard,true);
+				document.getElementById("test17_2").addEventListener("test17CustomEvent",onTest17_2EventHeard,true);
+			}
+			window.addEventListener("load",onTest17Loaded,false);
+		</script>
+		
+		<p>Both Area 1 and Area 2 below have capturing and bubbling listeners set for a custom event.  The two buttons create and dispatch events of that type on Area 2.  The first button creates an event with <code>bubbles=true</code> so all listeners should fire; the second button creates an event with <code>bubbles=false</code> so all but the bubbling listener on Area 1 (the last one) should fire.</p>
+		
+		<p><button onclick="onTest17Button1Poked();">Dispatch bubbling event</button> <button onclick="onTest17Button2Poked();">Dispatch non-bubbling event</button></p>
+		
+		<div class="nested" id="test17_1">Area 1
+			<div class="nested" id="test17_2">Area 2</div>
+		</div>
+	</div>
+	
 	<!--
 	<h1>Test W3C DOM2 Core</h1>
 	

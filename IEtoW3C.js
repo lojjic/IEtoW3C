@@ -92,13 +92,16 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		}
 		//bubbling:
 		for(var i=0; (tmp = ancestors[i]) && (!evt.cancelable || !evt.IEtoW3C_canceled); i++) {
-			if(tmp != evt.target) evt.eventPhase = 3;
 			evt.currentTarget = tmp;
 			var hdlrs = tmp.IEtoW3C_onevent[evt.type];
 			for(var j=0; hdlrs && j<hdlrs.bubble.length; j++) {
 				tmp.IEtoW3C_handler = hdlrs.bubble[j]; //make "this" refer to currentTarget
 				tmp.IEtoW3C_handler(evt);
 				tmp.IEtoW3C_handler = null;
+			}
+			if(i==0) {
+				if(!evt.bubbles) break;
+				evt.eventPhase = 3;
 			}
 		}
 
