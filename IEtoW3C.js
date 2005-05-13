@@ -14,6 +14,7 @@
 
 /*=== DOM2 Events: ===*/
 if (!window.addEventListener && document.all /*(remove to enable partial (buggy) MacIE support:)*/ && window.attachEvent) {
+
 	var IEtoW3C_evtAttrs = ["mouseover","mouseout","mousemove","click","change","focus","blur","load","keypress"];
 	function IEtoW3C_grabEventAttributes(elt) { //make on* attributes into DOM event listeners:
 		if(!elt.attachEvent) return; //HACK: don't do this on Mac, since we have to preserve the onclick property later to listen for events.
@@ -28,6 +29,7 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 			}
 		}
 	};
+
 	function IEtoW3C_execAttrEvent(evt) {
 		var func = this["IEtoW3C_on"+evt.type].toString();
 		var funcBody = func.substring(func.indexOf("{")+1, func.lastIndexOf("}"));
@@ -36,12 +38,15 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		var result = eval(funcBody);
 		if(result == false) evt.preventDefault(); //"return false;" prevents default action
 	};
+
 	function IEtoW3C_stopPropagation() {
 		this.IEtoW3C_canceled = true;
 	};
+
 	function IEtoW3C_preventDefault() {
 		this.returnValue = false;
 	};
+
 	function IEtoW3C_handleEvent(elt,evt) {
 		//fixup event object with DOM properties and methods:
 		if(!evt) var evt = window.event;
@@ -68,7 +73,7 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		var ancestors = [];
 		var tmp = evt.target;
 		while(tmp) {
-			IEtoW3C_grabEventAttributes(tmp);
+			IEtoW3C_hookupDOMEventsOn(tmp);
 			ancestors[ancestors.length] = tmp;
 			tmp = tmp.parentNode;
 		}
@@ -125,7 +130,7 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		var handlers = (capture) ? onevent.capture : onevent.bubble;
 		handlers[handlers.length] = handler;
 	};
-	
+
 	function IEtoW3C_removeEventListener(evtType,handler,capture) {
 		var onevent = this.IEtoW3C_onevent[evtType];
 		if(!onevent) return;
@@ -137,13 +142,13 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 			}
 		}
 	};
-	
+
 	function IEtoW3C_dispatchEvent(evt) {
 		if(!evt.type) return;
 		evt.target = evt.currentTarget = this;
 		IEtoW3C_handleEvent(this,evt);
 	};
-	
+
 	function IEtoW3C_hookupDOMEventsOn(elt) {
 		if(elt.IEtoW3C_onevent) return;
 		elt.IEtoW3C_onevent = {};
@@ -169,7 +174,7 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		// destroy all other added properties/methods:
 		elt.IEtoW3C_listen = elt.IEtoW3C_onevent = elt.addEventListener = elt.removeEventListener = elt.dispatchEvent = null;
 	};
-	
+
 	document.createEvent = function(evtFam) {
 		var evt = {}; //new Event object
 		if(evtFam=="UIEvents") {
