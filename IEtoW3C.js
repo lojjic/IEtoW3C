@@ -15,47 +15,49 @@
 /*=== DOM2 Events: ===*/
 if (!window.addEventListener && document.all /*(remove to enable partial (buggy) MacIE support:)*/ && window.attachEvent) {
 
-	var IEtoW3C_evtAttrs = ["mouseover","mouseout","mousemove","click","change","focus","blur","load","keypress"];
-	function IEtoW3C_grabEventAttributes(elt) { //make on* attributes into DOM event listeners:
+var IEtoW3C = {
+	evtAttrs : ["mouseover","mouseout","mousemove","click","change","focus","blur","load","keypress"],
+
+	grabEventAttributes : function(elt) { //make on* attributes into DOM event listeners:
 		if(!elt.attachEvent) return; //HACK: don't do this on Mac, since we have to preserve the onclick property later to listen for events.
 		if(elt.nodeType != 1) return; //elements only
-		for(var i=0; i<IEtoW3C_evtAttrs.length; i++) {
-			var evtName = IEtoW3C_evtAttrs[i];
+		for(var i=0; i<IEtoW3C.evtAttrs.length; i++) {
+			var evtName = IEtoW3C.evtAttrs[i];
 			var attr = (elt.getAttribute) ? elt.getAttribute("on"+evtName) : null;
 			if(attr) {
 				elt["IEtoW3C_on"+evtName] = elt["on"+evtName]; //use later to test if "return false" should preventDefault().
-				elt.addEventListener(evtName,IEtoW3C_execAttrEvent,false);
+				elt.addEventListener(evtName,IEtoW3C.execAttrEvent,false);
 				elt["on"+evtName] = null;
 			}
 		}
-	};
+	},
 
-	function IEtoW3C_execAttrEvent(evt) {
+	execAttrEvent : function(evt) {
 		var func = this["IEtoW3C_on"+evt.type].toString();
 		var funcBody = func.substring(func.indexOf("{")+1, func.lastIndexOf("}"));
 		funcBody = funcBody.replace(/([\W])this([\W])/,"$1event.currentTarget$2"); //fix "this" references
 		funcBody = "(function(event) {" + funcBody + "})(evt);";
 		var result = eval(funcBody);
 		if(result == false) evt.preventDefault(); //"return false;" prevents default action
-	};
+	},
 
-	function IEtoW3C_stopPropagation() {
+	stopPropagation : function() {
 		this.IEtoW3C_canceled = true;
-	};
+	},
 
-	function IEtoW3C_preventDefault() {
+	preventDefault : function() {
 		this.returnValue = false;
-	};
+	},
 
-	function IEtoW3C_handleEvent(elt,evt) {
+	handleEvent : function(elt,evt) {
 		//fixup event object with DOM properties and methods:
 		if(!evt) var evt = window.event;
 		if(!evt.currentTarget) evt.currentTarget = elt;
 		if(!evt.target) evt.target = evt.srcElement || elt;
 		if(evt.bubbles == null) evt.bubbles = true;
 		if(evt.cancelable == null) evt.cancelable = true;
-		evt.stopPropagation = IEtoW3C_stopPropagation;
-		evt.preventDefault = IEtoW3C_preventDefault;
+		evt.stopPropagation = IEtoW3C.stopPropagation;
+		evt.preventDefault = IEtoW3C.preventDefault;
 		if(!evt.relatedTarget) evt.relatedTarget = evt.fromElement || evt.toElement || null;
 		evt.pageX = evt.clientX + document.body.scrollLeft;
 		evt.pageY = evt.clientY + document.body.scrollTop;
@@ -73,7 +75,7 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		var ancestors = [];
 		var tmp = evt.target;
 		while(tmp) {
-			IEtoW3C_hookupDOMEventsOn(tmp);
+			IEtoW3C.hookupDOMEventsOn(tmp);
 			ancestors[ancestors.length] = tmp;
 			tmp = tmp.parentNode;
 		}
@@ -112,9 +114,9 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 
 		//restore keyCode so form fields will get keystroke
 		if(evt.charCode > 0 && evt.keyCode == 0) evt.keyCode = evt.charCode;
-	};
+	},
 
-	function IEtoW3C_addEventListener(evtType,handler,capture) {
+	addEventListener : function(evtType,handler,capture) {
 		var onevent = this.IEtoW3C_onevent[evtType];
 		if(!onevent) {
 			onevent = this.IEtoW3C_onevent[evtType] = {capture:[],bubble:[]};
@@ -122,16 +124,16 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 			//we cache a reference to the handler function so we can remove the listener during teardown
 			var thisRef = this;
 			if(!this.IEtoW3C_listen) this.IEtoW3C_listen = {/*evtType : handler*/};
-			var lstn = this.IEtoW3C_listen[evtType] = function() { IEtoW3C_handleEvent(thisRef) };
+			var lstn = this.IEtoW3C_listen[evtType] = function() { IEtoW3C.handleEvent(thisRef) };
 			if(this.attachEvent) this.attachEvent("on"+evtType, lstn);
 			else this["on"+evtType] = lstn; //IE Mac
 		}
 		this.removeEventListener(evtType,handler,capture); //avoid duplicates
 		var handlers = (capture) ? onevent.capture : onevent.bubble;
 		handlers[handlers.length] = handler;
-	};
+	},
 
-	function IEtoW3C_removeEventListener(evtType,handler,capture) {
+	removeEventListener : function(evtType,handler,capture) {
 		var onevent = this.IEtoW3C_onevent[evtType];
 		if(!onevent) return;
 		var handlers = (capture) ? onevent.capture : onevent.bubble;
@@ -141,26 +143,26 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 				handlers.length--;
 			}
 		}
-	};
+	},
 
-	function IEtoW3C_dispatchEvent(evt) {
+	dispatchEvent : function(evt) {
 		if(!evt.type) return;
 		evt.target = evt.currentTarget = this;
-		IEtoW3C_handleEvent(this,evt);
-	};
+		IEtoW3C.handleEvent(this,evt);
+	},
 
-	function IEtoW3C_hookupDOMEventsOn(elt) {
+	hookupDOMEventsOn : function(elt) {
 		if(elt.IEtoW3C_onevent) return;
 		elt.IEtoW3C_onevent = {};
 
-		elt.addEventListener = IEtoW3C_addEventListener;
-		elt.removeEventListener = IEtoW3C_removeEventListener;
-		elt.dispatchEvent = IEtoW3C_dispatchEvent;
-		IEtoW3C_grabEventAttributes(elt);
-	};
+		elt.addEventListener = IEtoW3C.addEventListener;
+		elt.removeEventListener = IEtoW3C.removeEventListener;
+		elt.dispatchEvent = IEtoW3C.dispatchEvent;
+		IEtoW3C.grabEventAttributes(elt);
+	},
 	
-	function IEtoW3C_unhookDOMEventsFrom(elt) {
-		// detach all listeners attached in IEtoW3C_addEventListener above:
+	unhookDOMEventsFrom : function(elt) {
+		// detach all listeners attached in IEtoW3C.addEventListener above:
 		if(elt.IEtoW3C_listen) {
 			for(var i in elt.IEtoW3C_listen) {
 				if(elt.detachEvent) elt.detachEvent("on"+i, elt.IEtoW3C_listen[i]);
@@ -168,66 +170,67 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 			}
 		}
 		// remove cached "onevent" attributes:
-		for(var i=0; i<IEtoW3C_evtAttrs.length; i++) {
-			elt["IEtoW3C_tmp"+IEtoW3C_evtAttrs[i]] = null;
+		for(var i=0; i<IEtoW3C.evtAttrs.length; i++) {
+			elt["IEtoW3C_on"+IEtoW3C.evtAttrs[i]] = null;
 		}
 		// destroy all other added properties/methods:
 		elt.IEtoW3C_listen = elt.IEtoW3C_onevent = elt.addEventListener = elt.removeEventListener = elt.dispatchEvent = null;
-	};
+	}
+};
 
-	document.createEvent = function(evtFam) {
-		var evt = {}; //new Event object
-		if(evtFam=="UIEvents") {
-			evt.initUIEvent = function(/*t,b,c,v,d*/) {
-				var initArgs = ["type","bubbles","cancelable","view","detail"];
-				for(var i=0,x; (x=initArgs[i]); i++) this[x]=arguments[i];
-			};
-		}
-		else if(evtFam=="MouseEvents") {
-			evt.initMouseEvent = function(/*t,b,c,v,d,sx,sy,cx,cy,ck,ak,sk,mk,b,r*/) {
-				var initArgs = ["type","bubbles","cancelable","view","detail","screenX","screenY","clientX","clientY","ctrlKey","altKey","shiftKey","metaKey","button","relatedTarget"];
-				for(var i=0,x; (x=initArgs[i]); i++) this[x]=arguments[i];
-			};
-		}
-		else if(evtFam=="MutationEvents") {
-			evt.initMutationEvent = function(/*t,b,c,r,p,n,an,ac*/) {
-				var initArgs = ["type","bubbles","cancelable","relatedNode","prevValue","newValue","attrName","attrChange"];
-				for(var i=0,x; (x=initArgs[i]); i++) this[x]=arguments[i];
-			};
-		}
-		else evt.initEvent = function(type,bub,can) {
-			this.type = type; this.bubbles = bub; this.cancelable = can;
+document.createEvent = function(evtFam) {
+	var evt = {}; //new Event object
+	if(evtFam=="UIEvents") {
+		evt.initUIEvent = function(/*t,b,c,v,d*/) {
+			var initArgs = ["type","bubbles","cancelable","view","detail"];
+			for(var i=0,x; (x=initArgs[i]); i++) this[x]=arguments[i];
 		};
-		return evt;
+	}
+	else if(evtFam=="MouseEvents") {
+		evt.initMouseEvent = function(/*t,b,c,v,d,sx,sy,cx,cy,ck,ak,sk,mk,b,r*/) {
+			var initArgs = ["type","bubbles","cancelable","view","detail","screenX","screenY","clientX","clientY","ctrlKey","altKey","shiftKey","metaKey","button","relatedTarget"];
+			for(var i=0,x; (x=initArgs[i]); i++) this[x]=arguments[i];
+		};
+	}
+	else if(evtFam=="MutationEvents") {
+		evt.initMutationEvent = function(/*t,b,c,r,p,n,an,ac*/) {
+			var initArgs = ["type","bubbles","cancelable","relatedNode","prevValue","newValue","attrName","attrChange"];
+			for(var i=0,x; (x=initArgs[i]); i++) this[x]=arguments[i];
+		};
+	}
+	else evt.initEvent = function(type,bub,can) {
+		this.type = type; this.bubbles = bub; this.cancelable = can;
 	};
+	return evt;
+};
 
-	IEtoW3C_hookupDOMEventsOn(window);
-	IEtoW3C_hookupDOMEventsOn(document);
-	window.addEventListener("load",function() {
-		var all = document.all;
-		for(var i=0; i<all.length; i++) IEtoW3C_hookupDOMEventsOn(all[i]);
-		
-		//set dummy listeners for mouse events that natively fire on document but
-		//not on window, so they will bubble up in our custom loop:
-		var dummies = ["click","mouseover","mouseout","mousemove"];
-		for(var i=0; i<dummies.length; i++) document.addEventListener(dummies[i],function(){},false);
-	},false);
-
-	window.addEventListener("unload",function() { //clean up:
-		IEtoW3C_unhookDOMEventsFrom(window);
-		IEtoW3C_unhookDOMEventsFrom(document);
-		var all = document.all;
-		for(var i=0; i<all.length; i++) IEtoW3C_unhookDOMEventsFrom(all[i]);
-		document.createEvent = null;
-	},false);
+IEtoW3C.hookupDOMEventsOn(window);
+IEtoW3C.hookupDOMEventsOn(document);
+window.addEventListener("load",function() {
+	var all = document.all;
+	for(var i=0; i<all.length; i++) IEtoW3C.hookupDOMEventsOn(all[i]);
 	
-	//make it work for newly created elements:
-	document.IEtoW3C_createElement = document.createElement;
-	document.createElement = function(tagName) {
-		var newElt = document.IEtoW3C_createElement(tagName);
-		IEtoW3C_hookupDOMEventsOn(newElt);
-		return newElt;
-	};
+	//set dummy listeners for mouse events that natively fire on document but
+	//not on window, so they will bubble up in our custom loop:
+	var dummies = ["click","mouseover","mouseout","mousemove"];
+	for(var i=0; i<dummies.length; i++) document.addEventListener(dummies[i],function(){},false);
+},false);
+
+window.addEventListener("unload",function() { //clean up:
+	IEtoW3C.unhookDOMEventsFrom(window);
+	IEtoW3C.unhookDOMEventsFrom(document);
+	var all = document.all;
+	for(var i=0; i<all.length; i++) IEtoW3C.unhookDOMEventsFrom(all[i]);
+	document.createEvent = document.IEtoW3C_createElement = document.createElement = IEtoW3C = null;
+},false);
+
+//make it work for newly created elements:
+document.IEtoW3C_createElement = document.createElement;
+document.createElement = function(tagName) {
+	var newElt = document.IEtoW3C_createElement(tagName);
+	IEtoW3C.hookupDOMEventsOn(newElt);
+	return newElt;
+};
 }
 
 /*=== DOM2 Core: ===*/
@@ -251,7 +254,7 @@ if(!document.implementation.createDocument && window.ActiveXObject) {
 			throw "No MSXML found on system";
 		};
 		var newDoc = new ActiveXObject(getProgID());
-		IEtoW3C_hookupDOMEventsOn(newDoc);
+		IEtoW3C.hookupDOMEventsOn(newDoc);
 		newDoc.onreadystatechange = function() {
 			if(this.readyState == 4) {
 				if(this.onload) this.onload();
