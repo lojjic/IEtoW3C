@@ -16,13 +16,12 @@
 if (!window.addEventListener && document.all /*(remove to enable partial (buggy) MacIE support:)*/ && window.attachEvent) {
 
 var IEtoW3C = {
-	evtAttrs : ["mouseover","mouseout","mousemove","click","change","focus","blur","load","keypress"],
+	nativeEvents : {mouseover:1,mouseout:1,mousemove:1,click:1,change:1,focus:1,blur:1,load:1,keypress:1},
 
 	grabEventAttributes : function(elt) { //make on* attributes into DOM event listeners:
 		if(!elt.attachEvent) return; //HACK: don't do this on Mac, since we have to preserve the onclick property later to listen for events.
 		if(elt.nodeType != 1) return; //elements only
-		for(var i=0; i<IEtoW3C.evtAttrs.length; i++) {
-			var evtName = IEtoW3C.evtAttrs[i];
+		for(var evtName in IEtoW3C.nativeEvents) {
 			var attr = (elt.getAttribute) ? elt.getAttribute("on"+evtName) : null;
 			if(attr) {
 				elt["IEtoW3C_on"+evtName] = elt["on"+evtName]; //use later to test if "return false" should preventDefault().
@@ -120,13 +119,16 @@ var IEtoW3C = {
 		var onevent = this.IEtoW3C_onevent[evtType];
 		if(!onevent) {
 			onevent = this.IEtoW3C_onevent[evtType] = {capture:[],bubble:[]};
-			//set base listener to fire off custom event handling flow (it all starts here):
-			//we cache a reference to the handler function so we can remove the listener during teardown
-			var thisRef = this;
-			if(!this.IEtoW3C_listen) this.IEtoW3C_listen = {/*evtType : handler*/};
-			var lstn = this.IEtoW3C_listen[evtType] = function() { IEtoW3C.handleEvent(thisRef) };
-			if(this.attachEvent) this.attachEvent("on"+evtType, lstn);
-			else this["on"+evtType] = lstn; //IE Mac
+			//Wet base listener to fire off custom event handling flow, but only for the "native"
+			//events, since there's no use in having IE listen for events that will never be fired.
+			//We cache a reference to the handler function so we can remove the listener during teardown
+			if(IEtoW3C.nativeEvents[evtType]) {
+				var thisRef = this;
+				if(!this.IEtoW3C_listen) this.IEtoW3C_listen = {/*evtType : handler*/};
+				var lstn = this.IEtoW3C_listen[evtType] = function() { IEtoW3C.handleEvent(thisRef) };
+				if(this.attachEvent) this.attachEvent("on"+evtType, lstn);
+				else this["on"+evtType] = lstn; //IE Mac
+			}
 		}
 		this.removeEventListener(evtType,handler,capture); //avoid duplicates
 		var handlers = (capture) ? onevent.capture : onevent.bubble;
@@ -170,8 +172,8 @@ var IEtoW3C = {
 			}
 		}
 		// remove cached "onevent" attributes:
-		for(var i=0; i<IEtoW3C.evtAttrs.length; i++) {
-			elt["IEtoW3C_on"+IEtoW3C.evtAttrs[i]] = null;
+		for(var evtName in IEtoW3C.nativeEvents) {
+			elt["IEtoW3C_on"+evtName] = null;
 		}
 		// destroy all other added properties/methods:
 		elt.IEtoW3C_listen = elt.IEtoW3C_onevent = elt.addEventListener = elt.removeEventListener = elt.dispatchEvent = null;
