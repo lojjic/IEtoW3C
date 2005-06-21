@@ -16,7 +16,10 @@
 if (!window.addEventListener && document.all /*(remove to enable partial (buggy) MacIE support:)*/ && window.attachEvent) {
 
 var IEtoW3C = {
-	nativeEvents : {mouseover:1,mouseout:1,mousemove:1,click:1,change:1,focus:1,blur:1,load:1,keypress:1},
+	// A list of the natively handled events, which can appear as "onevent" attributes:
+	// This is an incomplete list of native IE events, limited to the most common for
+	// performance reasons. If you need to use other native events, add them here.
+	nativeEvents : {mouseover:1,mouseout:1,mousemove:1,mousedown:1,mouseup:1,click:1,change:1,focus:1,blur:1,load:1,unload:1,keypress:1,keyup:1,keydown:1},
 
 	grabEventAttributes : function(elt) { //make on* attributes into DOM event listeners:
 		if(!elt.attachEvent) return; //HACK: don't do this on Mac, since we have to preserve the onclick property later to listen for events.
@@ -119,7 +122,7 @@ var IEtoW3C = {
 		var onevent = this.IEtoW3C_onevent[evtType];
 		if(!onevent) {
 			onevent = this.IEtoW3C_onevent[evtType] = {capture:[],bubble:[]};
-			//Wet base listener to fire off custom event handling flow, but only for the "native"
+			//Set base listener to fire off custom event handling flow, but only for the "native"
 			//events, since there's no use in having IE listen for events that will never be fired.
 			//We cache a reference to the handler function so we can remove the listener during teardown
 			if(IEtoW3C.nativeEvents[evtType]) {
