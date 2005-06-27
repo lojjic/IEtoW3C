@@ -416,6 +416,46 @@ window.addEventListener("load",onWindowLoaded,false);
 		</div>
 	</div>
 	
+	<div id="test18">
+		<h2>18) Objects implementing EventListener interface</h2>
+		
+		<script type="text/javascript">
+			function onTest18Loaded() {
+				function Test18EventListener() {}
+				Test18EventListener.prototype = {
+					test18Text : "The EventListener's handleEvent method was called with the correct context; Test 18 passed!",
+					handleEvent : function(evt) {
+						output(this.test18Text || "Test 18 failed - 'this' keyword does not refer to the EventListener object.");
+					}
+				}
+				
+				document.getElementById("test18_button").addEventListener("click", new Test18EventListener, false);
+			}
+			window.addEventListener("load",onTest18Loaded,false);
+		</script>
+		
+		<p>The button below has a click listener that was attached by passing a JavaScript object as the <code>addEventListener</code> method's second argument.  That object implements the DOM2 <code>EventListener</code> interface since it has a <code>.handleEvent(event)</code> method which gets executed.</p>
+		<p><button id="test18_button">Click Me</button></p>
+	</div>
+	
+	<!--
+	<div id="test18">
+		<script type="text/javascript">
+			function onTest18ButtonPoked() {
+				document.getElementById("test18_area").innerHTML = "<div class='nested'>area <div class='nested' id='test18_nested'>click me</div></div>";
+				if(typeof IEtoW3C_hookupDOMEventsOnAll == "function") IEtoW3C_hookupDOMEventsOnAll(document.getElementById("test18_area"));
+				document.getElementById("test18_nested").addEventListener("click",function(evt){output("test 18 passed"); showProps(evt);},false);
+			}
+		</script>
+	
+		<p><button onclick="onTest18ButtonPoked();">Add innerHTML</button></p>
+		
+		<div class="nested" id="test18_area">
+		
+		</div>
+	</div>
+	-->
+	
 	<!--
 	<h1>Test W3C DOM2 Core</h1>
 	
