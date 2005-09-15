@@ -241,12 +241,16 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		for(var i=0; i<dummies.length; i++) document.addEventListener(dummies[i],function(){},false);
 	},false);
 
-	window.addEventListener("unload",function() { //clean up:
+	// clean up when leaving the page; add listener which adds another listener, so it runs after any other unload handlers.
+	var cleanupFunc = function() {
 		unhookDOMEventsFrom(window);
 		unhookDOMEventsFrom(document);
 		var all = document.all;
 		for(var i=0; i<all.length; i++) unhookDOMEventsFrom(all[i]);
 		document.createEvent = document.IEtoW3C_createElement = document.createElement = IEtoW3C = null;
+	};
+	window.addEventListener("unload",function() {
+		window.addEventListener("unload",cleanupFunc,false);
 	},false);
 
 	//make it work for newly created elements:
