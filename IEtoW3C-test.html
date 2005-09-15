@@ -9,7 +9,7 @@ http://lojjic.net/script-library/IEtoW3C-doc.html
 
 <style type="text/css">
 html, body {font-family:sans-serif; margin:0; padding:0; font-size:11px;}
-h1 {font-size:2em; margin:0; padding:.5em; border:double #000; border-width:5x 5px 5px 0; margin-right:10em;}
+h1 {font-size:2em; margin:0; padding:.5em; border:double #000; border-width:5px 5px 5px 0; margin-right:10em;}
 h2 {margin:0; padding:0; background:#FFF; font-size:1.5em;}
 p {margin:0; padding:0; margin-bottom:.5em;}
 ul, ol {margin:0; padding:0; padding-top:1em;}
@@ -436,6 +436,22 @@ window.addEventListener("load",onWindowLoaded,false);
 		
 		<p>The button below has a click listener that was attached by passing a JavaScript object as the <code>addEventListener</code> method's second argument.  That object implements the DOM2 <code>EventListener</code> interface since it has a <code>.handleEvent(event)</code> method which gets executed.</p>
 		<p><button id="test18_button">Click Me</button></p>
+	</div>
+	
+	<div id="test19">
+		<h2>19) Objects implementing EventListener interface</h2>
+		
+		<script type="text/javascript">
+			function onTest19Loaded() {
+				document.getElementById("test19_button").addEventListener("click", function() {
+					output("Test 19 failed; event handler was executed even though the button is disabled.");
+				}, false);
+			}
+			window.addEventListener("load",onTest19Loaded,false);
+		</script>
+		
+		<p>The button below is disabled, so the "click" listener attached to it should not fire.</p>
+		<p><button id="test19_button" disabled="disabled">Click Me</button></p>
 	</div>
 	
 	<!--

@@ -86,6 +86,9 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		} else evt.charCode = 0;
 		evt.returnValue = true;
 		evt.IEtoW3C_canceled = false;
+		
+		//if the target is a disabled control, exit:
+		if(evt.target.nodeType && evt.target.disabled && evt.target.tagName.match(/^(input|button|textarea|select)$/i)) return;
 
 		//make sure the event doesn't bubble to ancestors so it doesn't get handled more than once:
 		evt.cancelBubble = true;
@@ -127,15 +130,18 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 	};
 
 	function ListenerWrapper(elt, lst) {
+		this.element = elt;
 		this.listener = lst;
-		this.invoke = function(evt) {
-			if(typeof lst == "function") {
-				elt._lstnr = lst;
-				elt._lstnr(evt);
-				elt._lstnr = null;
-			}
-			else lst.handleEvent(evt);
-		};
+	};
+	ListenerWrapper.prototype.invoke = function(evt) {
+		var lst = this.listener;
+		if(typeof lst == "function") {
+			var elt = this.element;
+			elt._lstnr = lst;
+			elt._lstnr(evt);
+			elt._lstnr = null;
+		}
+		else lst.handleEvent(evt);
 	};
 
 	function addEventListener(type,listener,useCapture) {
