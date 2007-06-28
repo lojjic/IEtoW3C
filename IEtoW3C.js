@@ -109,13 +109,13 @@ if (!window.addEventListener && document.all /*(remove to enable partial (buggy)
 		//fire each handler in correct order, passing the event object as sole parameter:
 		//capturing:
 		evt.eventPhase = Event.CAPTURING_PHASE;
-		for(var i=ancestors.length-1; (tmp = ancestors[i]) && (!evt.cancelable || !evt.IEtoW3C_canceled); i--) {
-			if(i==0) evt.eventPhase = Event.AT_TARGET;
+		for(var i=ancestors.length-1; i>0 && (tmp = ancestors[i]) && (!evt.cancelable || !evt.IEtoW3C_canceled); i--) {
 			evt.currentTarget = tmp;
 			var hdlrs = tmp.IEtoW3C_onevent[evt.type];
 			for(var j=0,h; hdlrs && (h=hdlrs.capture[j]); j++) h.invoke(evt);
 		}
 		//bubbling:
+		evt.eventPhase = Event.AT_TARGET;
 		for(var i=0; (tmp = ancestors[i]) && (!evt.cancelable || !evt.IEtoW3C_canceled); i++) {
 			evt.currentTarget = tmp;
 			var hdlrs = tmp.IEtoW3C_onevent[evt.type];
